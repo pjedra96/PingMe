@@ -84,6 +84,23 @@ $(document).ready(function(){
 		$(this).parent().toggleClass('ShowImotion');
 		//$('#txt').focus();
 	});
+
+	// Pepople online window
+	$(document).on('click' , '.people', function(e){
+		var top = $(this).offset().top ,
+			top = Math.floor(top),
+		 	people = $(this).find('.people-online');
+		
+		people.toggleClass('ShowImotion');
+		
+		if( top <= 160 ){
+			people.toggleClass('top');
+		}
+		
+		if(!people.hasClass('ShowImotion')){
+			people.removeClass('top');
+		}
+	});
 });
 
 

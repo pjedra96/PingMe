@@ -35,7 +35,7 @@ hr { border: 0; width: 30px; height: 4px; background: #aad04f; float: left; }
 div[contenteditable=true] {
   border: 1px solid black;
   display:inline-block;
-  width:95%;
+  width:93%;
   padding: 10px;
   font-size:1.1em;
 }
@@ -60,6 +60,18 @@ pre {
 }
 
 .ShowImotion { display: flex !important; }
+
+.people-online {
+  position: absolute;
+  box-shadow: 1px 1px 1px 1px #333;
+  bottom: 130%;
+  background-color:white;
+  display: none;
+  right: 0;
+  flex-wrap: wrap;
+  overflow-y: scroll;
+  /*height: 80px;*/
+}
 
 .emotion-area {
   position: absolute;

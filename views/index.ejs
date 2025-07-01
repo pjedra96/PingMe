@@ -18,20 +18,26 @@
         <!-- Used by Emoji-Picker-jQuery-Emoji-Plugin -->
         <div class="emotion">
            <div id="txt" class="input" autocomplete="off" autofocus="on" oninput="isTyping()"  contenteditable="true" placeholder="Enter your message here..."></div>
-           <span class="emotion-Icon">
+            <span class="emotion-Icon">
                <i class="fa fa-smile-o fa-lg fa-fw" aria-hidden="true"></i>
                <div class="emotion-area"></div>
-           </span>
+            </span>
+            <span class="people">
+                <i class="fa fa-user-o fa-lg fa-fw" aria-hidden="true"></i>
+                <div class="people-online"></div>
+            </span>
         </div>
 
         <!--<input id="txt" autocomplete="off" contenteditable="true" autofocus="on" oninput="isTyping()" placeholder="type your message here...">-->
         <div class="value"></div>
         <button>Send</button>
+
     </form>
     <script>
             let socket = io.connect('http://localhost:8080');
             let typingTimer; //timer identifier 
             let doneTypingInterval = 2000;  //time in ms (5 seconds)
+            let users = 0;
             
             // Ask for username at the start
             let username = prompt('Who would you like to be identified as ?');
@@ -113,7 +119,9 @@
             });
             // append text if someone is online
             socket.on('is_online', function(username) {
-                $('#messages').append($('<li>').html(username));
+                let userOnline = username.split("=>");
+                $('#messages').append($('<li>').html(userOnline[0]));
+                $('.people-online').html('There are <strong> ' +  userOnline[1] + ' </strong>people online');
             });
     </script>
   </body>
