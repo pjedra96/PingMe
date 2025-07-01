@@ -10,10 +10,10 @@
   "author": "Piotr Jedra",
   "license": "ISC",
   "dependencies": {
-    "ejs": "^2.6.2",
+    "ejs": "^3.1.10",
     "express": "^4.17.1",
     "http": "0.0.0",
     "path": "^0.12.7",
-    "socket.io": "^2.2.0"
+    "socket.io": "^4.8.1"
   }
 }
