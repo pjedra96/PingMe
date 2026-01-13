@@ -1,6 +1,6 @@
 {
   "name": "node-real-time-chat",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "A simple group chat built using Node.js and Socket.io, with emoji library incorporated",
   "main": "index.js",
   "scripts": {
@@ -12,6 +12,7 @@
   "dependencies": {
     "ejs": "^3.1.10",
     "express": "^4.17.1",
+    "gun": "^0.2020.1241",
     "http": "0.0.0",
     "path": "^0.12.7",
     "socket.io": "^4.8.1"
