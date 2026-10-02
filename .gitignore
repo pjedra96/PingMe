@@ -8,6 +8,7 @@
 # Directories to Ignore #
 extraResources/
 node_modules/
+data/
 
 # OS generated files #
 ######################

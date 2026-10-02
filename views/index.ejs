@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Real-Time Group Chat Nodejs</title>
+    <title>PingMe Chat</title>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="css/style.css">
@@ -10,10 +10,12 @@
     <script src="vendor/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
     <script src="vendor/bootstrap_5.3.8/js/bootstrap.min.js"></script>
     <script src="js/plugins.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
+    <script src="vendor/gun/gun.js"></script>
+    <script src="vendor/gun/sea.js"></script>
+    <script>window.gunPort = <%= gunPort %>; // GUN relay port, passed in by index.js</script>
     <script src="js/authentication_section.js"></script>
     <script src="js/chat_section.js"></script>
+    <script src="js/lobby_section.js"></script>
     <script src="js/theme_utilities.js"></script>
   </head>
   <body>
@@ -21,22 +23,60 @@
     <div id="top-bar" style="display:none; align-items:center; justify-content:space-between; padding:8px 0;">
         <span id="theme-toggle" style="cursor:pointer; font-size:1.3em; margin-right:16px;">🌙</span>
         <span id="alias-display" style="cursor:pointer; font-weight:bold; flex:1; text-align:center;">anon</span>
+        <span id="room-display" style="margin-right:16px;"></span>
+        <span id="lobby-button" style="cursor:pointer; margin-right:16px; display:none;" onclick="backToLobby()">⬅ Lobby</span>
     </div>
 
     <!-- Authentication UI -->
     <div id="auth-container">
-        <input id="username" type="text" placeholder="Username">
+        <input id="username" type="text" maxlength="30" placeholder="Username">
         <input id="password" type="password" placeholder="Password">
         <div style="margin: 8px 0;">
             <input type="checkbox" id="anonymousCheckbox" onchange="toggleAnonymous()">
             <label for="anonymousCheckbox">Join as anonymous</label>
         </div>
-        <input id="groupKeyInput" type="hidden" placeholder="Group Key" style="margin-top:8px;" value="mesh-demo-key">
         <div style="display:flex; width:100%; justify-content:center;">
             <button onclick="login()">Login</button>
             <button onclick="register()">Register</button>
         </div>
         <div id="authStatus"></div>
+    </div>
+    <!-- Lobby UI: shown after logging in. Lists General and the public rooms with people in them -->
+    <div id="lobby-container" style="display:none;">
+        <h5>Rooms</h5>
+        <ul id="room-list"></ul>
+
+        <h6>Create or rejoin a room</h6>
+        <input id="createRoomName" type="text" maxlength="40" placeholder="Room name">
+        <div class="lobby-options">
+            <input type="radio" name="createRoomType" id="createPublic" checked onchange="toggleCreateRoomType()">
+            <label for="createPublic">Public (listed)</label>
+            <input type="radio" name="createRoomType" id="createPrivate" onchange="toggleCreateRoomType()">
+            <label for="createPrivate">Private (password)</label>
+        </div>
+        <input id="createRoomPassword" type="password" placeholder="Room password" style="display:none;">
+        <div class="lobby-options">
+            <input type="checkbox" id="createRoomHistory" checked>
+            <label for="createRoomHistory">Keep history</label>
+        </div>
+        <button onclick="createRoom()">Create / join</button>
+
+        <!-- A private room is shared only by people with the same name, password AND history setting -->
+        <h6>Join a private room</h6>
+        <input id="joinRoomName" type="text" maxlength="40" placeholder="Room name">
+        <input id="joinRoomPassword" type="password" placeholder="Room password">
+        <div class="lobby-options">
+            <input type="checkbox" id="joinRoomHistory" checked>
+            <label for="joinRoomHistory">Room keeps history (must match how it was created)</label>
+        </div>
+        <button onclick="joinPrivateRoom()">Join</button>
+
+        <!-- Only shown to moderators -->
+        <div id="moderation-panel" style="display:none;">
+            <h6>Banned</h6>
+            <ul id="ban-list"></ul>
+        </div>
+        <div id="lobbyStatus"></div>
     </div>
     <!-- Chat UI -->
     <div id="chat-container" style="display:none;">
@@ -44,7 +84,7 @@
         <div id="messages"></div>
     </div>
     <div id="input-area" style="display:none;">
-        <textarea id="msgInput" placeholder="Type your message..." class="input" autocomplete="off" autofocus="on" rows="1" style="resize: none; width: 70%;"></textarea>
+        <textarea id="msgInput" placeholder="Type your message..." maxlength="5000" class="input" autocomplete="off" autofocus="on" rows="1" style="resize: none; width: 70%;"></textarea>
         <div class="emotion">
             <span class="emotion-Icon">
                 <i class="fa fa-smile-o fa-lg fa-fw" aria-hidden="true"></i>
@@ -82,21 +122,20 @@
 
     </form>-->
     <script>
-            // Connect to the Socket.io server
-            let socket = io.connect('http://localhost:8080');
+            // Connect to the Socket.io server that served this page
+            let socket = io();
 
             /****************** Handling the events emitted by the index.js server ******************/
-            // Add the "user is typing" notification
+            // Add the "user is typing" notification (the server only sends it to the other people in the room)
             socket.on('typing', function(data){
-                if(username != data.username){
-                    $('#notifications').html('<li id="typing"><i>' + data.notification + '</i>');
-                    // Auto Scroll to the bottom of the page if the content goes out of the viewport
-                    $('html, body').animate({scrollTop:$(document).height()}, 'slow');
-                }
+                $('#typing').remove();
+                $('#notifications').append($('<li id="typing">').append($('<i>').text(data.notification)));
+                // Auto Scroll to the bottom of the page if the content goes out of the viewport
+                $('html, body').animate({scrollTop:$(document).height()}, 'slow');
             });
             // Remove the "username is typing" message
             socket.on('doneTyping', function(){
-                $('#notifications').html("");
+                $('#typing').remove();
             });
             // append the message to the message board
             socket.on('chat_message', function(msg){
@@ -105,10 +144,11 @@
                 $('html, body').animate({scrollTop:$(document).height()}, 'slow');
             });
             // append text if someone is online
-            socket.on('is_online', function(username) {
-                let userOnline = username.split("=>");
-                $('#messages').append($('<li>').html(userOnline[0]));
-                $('.people-online').html('There are <strong> ' +  userOnline[1] + ' </strong>people online');
+            socket.on('is_online', function(data) {
+                const joined = data.action === 'join';
+                const notice = $('<i>').append($('<strong>').text(data.username), joined ? ' joined the chat..' : ' left the chat..');
+                $('#messages').append($('<li>').append($('<span>', { id: joined ? 'joined' : 'left' }), ' ', notice));
+                $('.people-online').empty().append('There are ', $('<strong>').text(data.usersOnline), ' people online');
             });
     </script>
   </body>

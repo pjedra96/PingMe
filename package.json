@@ -1,20 +1,18 @@
 {
-  "name": "node-real-time-chat",
-  "version": "2.0.0",
-  "description": "A simple group chat built using Node.js and Socket.io, with emoji library incorporated",
+  "name": "PingMe",
+  "version": "3.0.0",
+  "description": "Real-time group chat with encrypted message history, built on Socket.io and GUN.js",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js"
   },
-  "author": "Piotr Jedra",
-  "license": "ISC",
+  "author": "Peter Jedra",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "dependencies": {
     "ejs": "^3.1.10",
     "express": "^4.17.1",
     "gun": "^0.2020.1241",
-    "http": "0.0.0",
-    "path": "^0.12.7",
     "socket.io": "^4.8.1"
   }
 }

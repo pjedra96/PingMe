@@ -98,7 +98,7 @@ form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 
   transition: background 0.2s;
 }
 
-#auth-container {
+#auth-container, #lobby-container {
   background: #fff;
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.07);
@@ -111,7 +111,7 @@ form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 
   flex-direction: column;
   align-items: center;
 }
-#auth-container input {
+#auth-container input, #lobby-container input {
   margin: 6px 0;
   padding: 8px 10px;
   border-radius: 6px;
@@ -121,7 +121,82 @@ form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 
   box-sizing: border-box;
   background: #f8fafc;
 }
-#auth-container button {
+#lobby-container input[type=radio], #lobby-container input[type=checkbox] {
+  width: auto;
+  margin: 0 4px 0 12px;
+}
+#lobby-container h5, #lobby-container h6 {
+  margin: 16px 0 4px 0;
+}
+#lobby-container h5 {
+  margin-top: 0;
+}
+.lobby-options {
+  margin: 4px 0;
+}
+#room-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  width: 90%;
+}
+#room-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  margin: 4px 0;
+  border: 1px solid #e0e4ea;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #222;
+}
+#room-list li:hover {
+  background: #f0f6ff;
+}
+#room-list .room-info {
+  font-size: 0.85rem;
+  color: #667;
+}
+#moderation-panel {
+  width: 90%;
+}
+#ban-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+#ban-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  margin: 4px 0;
+  border: 1px solid #e0e4ea;
+  border-radius: 6px;
+  color: #222;
+}
+#ban-list li button {
+  margin: 0;
+  padding: 4px 10px;
+}
+.msg-mod-tools {
+  margin-left: 8px;
+  opacity: 0.4;
+}
+.msg-mod-tools:hover {
+  opacity: 1;
+}
+.msg-mod-button {
+  cursor: pointer;
+  margin-left: 4px;
+}
+#lobbyStatus {
+  margin-top: 10px;
+  min-height: 22px;
+}
+#auth-container button, #lobby-container button {
   margin: 8px 6px 0 6px;
   padding: 8px 18px;
   border-radius: 6px;
@@ -134,7 +209,7 @@ form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 
   box-shadow: 0 1px 4px rgba(0,0,0,0.04);
   transition: background 0.2s;
 }
-#auth-container button:hover {
+#auth-container button:hover, #lobby-container button:hover {
   background: #1766c2;
 }
 

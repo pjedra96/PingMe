@@ -3,12 +3,14 @@ const gun = Gun({
   peers: [
     //'https://gun-manhattan.herokuapp.com/gun',
     //'https://your-vps-domain.com/gun',
-    'http://localhost:8765/gun'
+    // GUN relay on the same host that served this page
+    location.protocol + '//' + location.hostname + ':' + (window.gunPort || 8765) + '/gun'
   ],
   localStorage: false,
   radisk: false,
   multicast: false
 });
+window.gun = gun; // Shared with chat_section.js (a top-level const isn't a window property, so it must be set explicitly)
 
 document.addEventListener('DOMContentLoaded', function() {
   // UI elements
@@ -43,22 +45,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const username = document.getElementById('username').value.trim();
     const passwordInput = document.getElementById('password');
     const anonymous = document.getElementById('anonymousCheckbox') && document.getElementById('anonymousCheckbox').checked;
+    if (!username) {
+      authStatus.textContent = 'Please enter a username.';
+      authStatus.style.color = '#aa0000';
+      return;
+    }
     if (anonymous) {
-      // Anonymous join: skip password, just set alias and show chat
-      authStatus.textContent = 'Joined as ' + username + ' (anonymous)';
-      authStatus.style.color = '#007700';
-      chatContainer.style.display = 'block';
-      authContainer.style.display = 'none';
-      topBar.style.display = 'flex';
-      inputArea.style.display = 'flex';
-      window.alias = username;
-      var aliasDisplay = document.getElementById('alias-display');
-      if (aliasDisplay) aliasDisplay.textContent = username;
-      // Optionally, set myPub to null or a random value
-      myPub = null;
-      // Optionally, set a default theme
-      if (window.applyTheme) window.applyTheme(window.isDark);
-      socket.emit('username', username); // Notify chat of username
+      // Anonymous join: skip password, check the name is free with the server, then show the lobby
+      window.identify(username, null).then(function(error) {
+        if (error) {
+          authStatus.textContent = error;
+          authStatus.style.color = '#aa0000';
+          return;
+        }
+        joinedAnonymously(username);
+      });
       return;
     }
     const password = passwordInput.value;
@@ -66,33 +67,50 @@ document.addEventListener('DOMContentLoaded', function() {
         if (res.err) {
           authStatus.textContent = 'Login failed: ' + res.err;
           authStatus.style.color = '#aa0000';
-          chatContainer.style.display = 'none';
-          authContainer.style.display = 'block';
-          topBar.style.display = 'none';
-          inputArea.style.display = 'none';
-        } else {
-          authStatus.textContent = 'Logged in as ' + username;
-          authStatus.style.color = '#007700';
-          chatContainer.style.display = 'block';
-          authContainer.style.display = 'none';
-          topBar.style.display = 'flex';
-          inputArea.style.display = 'flex';
-          myPub = user.is.pub;
-          // Automatically update alias and alias display
-          window.alias = username;
-          var aliasDisplay = document.getElementById('alias-display');
-          if (aliasDisplay) aliasDisplay.textContent = username;
-          // Load theme preference from Gun
-          user.get('theme').once(function(themePref) {
-            if (typeof themePref === 'boolean') {
-              window.isDark = themePref;
-              // Apply theme
-              if (window.applyTheme) window.applyTheme(themePref);
-            }
-          });
-          socket.emit('username', username); // Notify chat of username
-      }
+          return;
+        }
+        // Prove to the server that this account owns the name (and claim it, the first time)
+        const error = await window.identify(username, user._.sea);
+        if (error) {
+          user.leave();
+          authStatus.textContent = error;
+          authStatus.style.color = '#aa0000';
+          return;
+        }
+        loggedIn(username);
     }, {sessionStorage: true}); // Enable session storage (persist login across reloads)
+  }
+
+  function joinedAnonymously(username) {
+    authStatus.textContent = 'Joined as ' + username + ' (anonymous)';
+    authStatus.style.color = '#007700';
+    window.alias = username;
+    var aliasDisplay = document.getElementById('alias-display');
+    if (aliasDisplay) aliasDisplay.textContent = username;
+    // Optionally, set myPub to null or a random value
+    myPub = null;
+    // Optionally, set a default theme
+    if (window.applyTheme) window.applyTheme(window.isDark);
+    window.showLobby(); // Pick or create a room
+  }
+
+  function loggedIn(username) {
+    authStatus.textContent = 'Logged in as ' + username;
+    authStatus.style.color = '#007700';
+    myPub = user.is.pub;
+    // Automatically update alias and alias display
+    window.alias = username;
+    var aliasDisplay = document.getElementById('alias-display');
+    if (aliasDisplay) aliasDisplay.textContent = username;
+    // Load theme preference from Gun
+    user.get('theme').once(function(themePref) {
+      if (typeof themePref === 'boolean') {
+        window.isDark = themePref;
+        // Apply theme
+        if (window.applyTheme) window.applyTheme(themePref);
+      }
+    });
+    window.showLobby(); // Pick or create a room
   }
 
   window.register = function() {

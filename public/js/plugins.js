@@ -76,9 +76,23 @@ $(document).ready(function(){
 		e.stopPropagation();
 	});
 	
+	// Weather symbols (U+1F321-U+1F328) render as plain text unless followed by the emoji variation selector
+	function emojiFromImg(src) {
+		var hex = src.match(/([0-9a-f]+)\.png$/i)[1];
+		var codePoint = parseInt(hex, 16);
+		var emoji = String.fromCodePoint(codePoint);
+		if (codePoint >= 0x1F321 && codePoint <= 0x1F328) {
+			emoji += '️';
+		}
+		return emoji;
+	}
+
 	$(document).on('click' , '.emotion-area img', function(e){
-		var imgIcon = $(this).clone();
-		$(this).parents('.emotion').find('.input').append(imgIcon);
+		// Insert the Unicode emoji at the cursor position of the message textarea
+		var msgInput = document.getElementById('msgInput');
+		msgInput.focus();
+		msgInput.setRangeText(emojiFromImg($(this).attr('src')), msgInput.selectionStart, msgInput.selectionEnd, 'end');
+		msgInput.dispatchEvent(new Event('input')); // Triggers the "is typing" notification
 
 		// Once the emoji is selected, close the emoji picker window
 		$(this).parent().toggleClass('ShowImotion');
